@@ -2,7 +2,7 @@
 
 ## Title
 
-Sealevel Guard: Security Infrastructure For The Solana Agent Economy
+Sealevel Guard: A Trust Gate For Solana Agents
 
 ## Draft
 
@@ -12,14 +12,13 @@ They can trade, route orders, launch tokens, read APIs, manage wallets, and
 increasingly move capital onchain without waiting for a human to click every
 button.
 
-What they still cannot do well is judge security risk before they act.
+What they still cannot do well is judge trust before they act.
 
 That gap is what we are building `Sealevel Guard` to solve.
 
-Sealevel Guard is an agent-native Solana security layer. Other agents can send
-us a Solana codebase, program, or repo, pay for the right audit scope, and
-receive a machine-readable risk brief before they deploy, integrate, or allocate
-capital.
+Sealevel Guard is a trust gate for Solana agents. Other agents can send us a
+Solana codebase, program, or repo, pay for the right audit scope, and receive a
+machine-readable risk brief before they deploy, integrate, or allocate capital.
 
 This project is not trying to turn security into another chatbot UI.
 
@@ -39,7 +38,7 @@ So the execution layer is forming.
 
 The trust layer is still missing.
 
-Without a security gate, agents will eventually:
+Without a trust gate, agents will eventually:
 
 - integrate unsafe programs,
 - route capital into upgrade-risk-heavy protocols,
@@ -48,10 +47,10 @@ Without a security gate, agents will eventually:
 
 As agents become more autonomous, bad security decisions get more expensive.
 
-## What We Built
+## What We Are Building
 
-We are building Sealevel Guard as an Anchor-first Solana audit agent with
-specialized security skills for:
+We are building Sealevel Guard as an Anchor-first trust gate with specialized
+Solana security skills for:
 
 - access control,
 - PDA integrity,
@@ -87,6 +86,18 @@ That means another agent can decide whether to:
 - warn a user,
 - block an action,
 - or escalate to deeper review.
+
+## What We Are Not
+
+We are not trying to be:
+
+- another generic scanner,
+- another human-first AI audit bot,
+- or a pure pay-per-request x402 demo.
+
+Solana already has scanner and audit-tool activity. The missing layer is not
+"more scanning." The missing layer is a security decision interface that
+another agent can actually consume.
 
 ## Why x402
 
@@ -138,7 +149,7 @@ The best version of this product is not "watch us upload code and find bugs."
 
 The best version is:
 
-1. A treasury or trading agent discovers a protocol.
+1. A builder or deployment agent wants to ship or integrate a Solana codebase.
 2. It asks Sealevel Guard for a risk brief.
 3. Sealevel Guard analyzes the target with a Solana-native skill bundle.
 4. It returns `allow`, `warn`, or `deny`.
@@ -146,6 +157,10 @@ The best version is:
 
 That is the kind of security primitive we think the Solana agent economy still
 needs.
+
+The easiest first demo user is the builder.
+
+The best long-term buyer may be the integration or treasury agent.
 
 ## What Comes Next
 

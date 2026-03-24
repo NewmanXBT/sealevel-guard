@@ -2,13 +2,13 @@
 
 ## One-Line Pitch
 
-`Sealevel Guard` is a Solana audit agent that other agents can pay to use before
-they deploy code, integrate protocols, or move capital.
+`Sealevel Guard` is a trust gate for Solana agents before they deploy,
+integrate, or allocate capital.
 
 ## Short Pitch
 
 AI agents can already write code, route funds, launch tokens, and call APIs.
-What they still lack is a native security judgment layer.
+What they still lack is a native trust gate before they act.
 
 Sealevel Guard fills that gap. It analyzes Solana codebases and programs through
 specialized audit skills, then returns a structured risk brief another agent can
@@ -19,8 +19,8 @@ use to decide:
 - deny,
 - or escalate for deeper review.
 
-This is not a generic chatbot for humans. It is security infrastructure for the
-Solana agent economy.
+This is not a generic scanner, and it is not another audit chatbot for humans.
+It is security infrastructure for the Solana agent economy.
 
 ## Why Now
 
@@ -36,7 +36,7 @@ The Solana ecosystem is explicitly pushing toward agentic usage:
 
 That means agents are increasingly able to act.
 
-The missing layer is: can they judge risk before they act?
+The missing layer is simple: can they judge trust before they act?
 
 ## The Core Problem
 
@@ -47,7 +47,7 @@ Most agent infrastructure today optimizes for:
 - automation,
 - and monetization.
 
-Very little of it optimizes for `security gating`.
+Very little of it optimizes for `trust gating`.
 
 Without a security layer, autonomous agents will:
 
@@ -60,7 +60,8 @@ As agentic finance grows, the cost of bad autonomous decisions grows with it.
 
 ## Our Insight
 
-Security for agents should not look like traditional audit consulting.
+Security for agents should not look like traditional audit consulting or a
+standalone scanner.
 
 It should look like a machine-readable clearing layer:
 
@@ -72,6 +73,27 @@ It should look like a machine-readable clearing layer:
 6. The upstream agent decides whether to proceed.
 
 This turns security from a PDF artifact into a decision primitive.
+
+## What We Are Competing With
+
+We are not entering a blank market.
+
+Solana already has:
+
+- static security scanners,
+- AI-assisted audit products,
+- and trader-facing risk tools.
+
+That is exactly why Sealevel Guard should not position itself as:
+
+- a better scanner,
+- a broader scanner,
+- or a generic AI audit tool.
+
+The winning position is one layer above that:
+
+- scanners produce findings,
+- Sealevel Guard produces a trust decision another agent can consume.
 
 ## Why Solana
 
@@ -216,13 +238,27 @@ The strongest demo is not "watch us find a bug."
 
 The strongest demo is:
 
-1. A treasury or trading agent discovers a Solana protocol.
+1. A builder or deployment agent wants to ship or integrate a Solana codebase.
 2. It requests a risk brief from Sealevel Guard.
 3. Sealevel Guard estimates the job and executes the right skill bundle.
 4. It returns a risk brief with `allow`, `warn`, or `deny`.
 5. The upstream agent changes its behavior based on the result.
 
 This makes the product legible as agent infrastructure, not just auditing UX.
+
+## User Sequencing
+
+The easiest first demo user is:
+
+- `builder / deployment agent`
+
+The best long-term buyer is more likely:
+
+- `integration agent`
+- or `treasury agent`
+
+That means our demo should optimize for legibility, while our product shape
+should optimize for high-consequence trust decisions.
 
 ## Submission Angle
 
@@ -239,12 +275,12 @@ paths before they lose money.
 
 ## Draft Submission Copy
 
-Sealevel Guard is an agent-native Solana security layer. Other agents can send
-us a codebase or program, pay for the right audit scope, and receive a
+Sealevel Guard is a trust gate for Solana agents. Other agents can send us a
+codebase or program, pay for the right audit scope, and receive a
 machine-readable risk brief before they deploy, integrate, or allocate capital.
 
-Instead of treating security as a PDF for humans, we treat it as an API for
-agents. We start Anchor-first, with Solana-specific audit skills for access
+Instead of treating security as a PDF for humans, we treat it as a decision API
+for agents. We start Anchor-first, with Solana-specific audit skills for access
 control, PDA safety, account constraints, CPI risk, and token invariants. x402
 is used as the settlement rail, while pricing is based on codebase complexity
 and audit scope.
@@ -254,4 +290,5 @@ and audit scope.
 - how much of the first demo should be real static analysis vs LLM-guided review,
 - whether the first public UX should lead with `Quick Scan` or `Quoted Audit`,
 - how fine-grained the pricing tiers should be for hackathon day,
+- whether x402 should have a fallback path in demo,
 - and which benchmark set is realistic to assemble before submission.

@@ -6,15 +6,24 @@ Sealevel Guard
 
 ## Summary
 
-Sealevel Guard is an Anchor-first Solana audit agent that allows other agents
-to request risk evaluation before they deploy code, integrate protocols, or
-move capital. The system is designed around quoted audit jobs, with x402 used
-as the settlement rail.
+Sealevel Guard is an Anchor-first trust gate for Solana agents. It allows other
+agents to request risk evaluation before they deploy code, integrate protocols,
+or move capital. The system is designed around quoted audit jobs, with x402
+used as the settlement rail.
 
 ## Product Goal
 
 Turn Solana security review into a machine-readable service that upstream agents
 can use as a decision primitive.
+
+## Positioning
+
+Sealevel Guard should be understood as:
+
+- a trust gate,
+- not a generic scanner,
+- not a human-first audit chatbot,
+- and not a pure pay-per-request x402 demo.
 
 ## Non-Goals
 
@@ -25,12 +34,26 @@ can use as a decision primitive.
 
 ## Main Users
 
-- treasury agents,
 - integration agents,
+- treasury agents,
 - deployment agents,
-- trading agents,
 - builder agents,
+- trading agents,
 - and secondarily the humans operating those agents.
+
+## User Priority
+
+### Demo wedge
+
+- builder / deployment agents
+
+### Best long-term buyer
+
+- integration agents
+
+### High-value expansion
+
+- treasury / capital allocation agents
 
 ## Primary Jobs To Be Done
 
@@ -55,6 +78,23 @@ A treasury or strategy agent wants a fast security signal before routing funds.
 - async job execution,
 - benchmark-backed credibility.
 
+## Differentiation
+
+### Versus scanners
+
+Scanners produce findings. Sealevel Guard produces an actionable trust decision
+for another agent.
+
+### Versus AI audit tools
+
+Most AI audit tools are still human-first. Sealevel Guard is agent-readable
+first.
+
+### Versus token risk products
+
+We are not primarily scoring meme coins, rugs, or market behavior. We are
+evaluating whether another agent should trust a Solana codebase or program.
+
 ## Core Concepts
 
 ### 1. Estimate
@@ -75,6 +115,9 @@ The system returns:
 - recommended depth,
 - quoted price,
 - ETA.
+
+Estimate must also be able to reject unsupported or margin-destructive inputs
+loudly.
 
 ### 2. Audit Job
 
@@ -167,6 +210,8 @@ Audit cost depends on:
 - depth,
 - and output artifact expectations.
 
+This makes quoted work the correct core business model.
+
 ### Proposed Tiers
 
 #### Quick Scan
@@ -174,12 +219,14 @@ Audit cost depends on:
 - fixed low price
 - coarse triage only
 - suitable for lightweight intake
+- acceptable as per-request pricing
 
 #### Standard Audit
 
 - quoted by codebase band
 - default skill bundle
 - machine-readable risk brief included
+- primary revenue path
 
 #### Deep Audit
 
@@ -187,11 +234,23 @@ Audit cost depends on:
 - expanded findings and remediation
 - suitable for higher-value decisions
 
+### Reject Rules
+
+The estimate phase should classify and return clear states for:
+
+- unsupported repo format
+- no detectable Solana program
+- native Rust when unsupported
+- repo too large for current release
+- expired quote
+
 ## x402 Role
 
 x402 is used for payment settlement.
 
 It is not the source of truth for pricing logic.
+
+The posture should be x402-forward, but not x402-dependent.
 
 ### Intended flow
 
@@ -201,6 +260,14 @@ It is not the source of truth for pricing logic.
 4. audit job begins
 5. caller polls or subscribes for status
 6. caller receives risk brief
+
+### Demo posture
+
+For hackathon demo, keep one safety valve:
+
+- pre-funded demo wallet,
+- simulated paid flow,
+- or a controlled fallback path.
 
 ## API Draft
 
@@ -318,7 +385,7 @@ running -> failed
 
 ### Demo actor
 
-A treasury or integration agent.
+A builder or deployment agent.
 
 ### Demo flow
 
@@ -339,6 +406,7 @@ A treasury or integration agent.
 - one final risk brief JSON schema
 - 3 to 5 Solana skills
 - one benchmark-backed demo example
+- one explicit unsupported / rejected path
 
 ## Open Decisions
 
@@ -346,4 +414,5 @@ A treasury or integration agent.
 - how estimate handles very large repos,
 - whether unsupported native Rust repos should be hard-rejected or soft-scored,
 - what the first public pricing bands should be,
+- whether x402 needs a non-demo fallback,
 - and whether reports should include both JSON and markdown in v1.
