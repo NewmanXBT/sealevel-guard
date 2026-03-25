@@ -1,12 +1,15 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 function parseArgs(argv) {
-  const args = { manifest: null };
+  const args = { manifest: null, runtime: process.env.SEALEVEL_GUARD_RUNTIME || "mock" };
   for (let i = 0; i < argv.length; i += 1) {
     const value = argv[i];
     if (value === "--manifest") {
       args.manifest = argv[++i] || null;
+    } else if (value === "--runtime") {
+      args.runtime = argv[++i] || "mock";
     } else if (value === "--help" || value === "-h") {
       printHelp();
       process.exit(0);
@@ -21,7 +24,9 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log("Usage:\n  node scripts/run-specialists.mjs --manifest <PATH_TO_BUNDLE_MANIFEST_JSON>\n");
+  console.log(
+    "Usage:\n  node scripts/run-specialists.mjs --manifest <PATH_TO_BUNDLE_MANIFEST_JSON> [--runtime <mock|codex>]\n"
+  );
 }
 
 function readJson(path) {
@@ -85,6 +90,167 @@ function buildFinding(fields) {
     kind: "FINDING",
     ...fields
   };
+}
+
+function specialistSchema() {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: ["findings"],
+    properties: {
+      findings: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "kind",
+            "group_key",
+            "title",
+            "skill",
+            "severity",
+            "confidence",
+            "instruction_or_handler",
+            "primary_account_or_authority",
+            "evidence",
+            "trust_consequence",
+            "exploit_path",
+            "why_it_matters"
+          ],
+          properties: {
+            kind: { type: "string", enum: ["FINDING", "LEAD"] },
+            group_key: { type: "string" },
+            title: { type: "string" },
+            skill: { type: "string" },
+            severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
+            confidence: { type: "integer", minimum: 0, maximum: 100 },
+            instruction_or_handler: { type: "string" },
+            primary_account_or_authority: { type: "string" },
+            evidence: { type: "array", items: { type: "string" } },
+            trust_consequence: { type: "string" },
+            exploit_path: { type: "string" },
+            why_it_matters: { type: "string" }
+          }
+        }
+      }
+    }
+  };
+}
+
+function buildCodexPrompt(bundlePath, specialist) {
+  return [
+    `You are the Sealevel Guard ${specialist} specialist.`,
+    `Read the bundle file at: ${bundlePath}`,
+    "",
+    "Rules:",
+    "- Read the full bundle before responding.",
+    "- Focus only on your specialist scope.",
+    "- Return only JSON matching the provided schema.",
+    "- If no supported issue survives, return {\"findings\":[]}.",
+    "- Evidence must use source-relative file paths with exact line numbers where possible.",
+    "- Do not include explanations outside the JSON output."
+  ].join("\n");
+}
+
+function runCommand(command, args, options = {}) {
+  return spawnSync(command, args, {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      OTEL_SDK_DISABLED: "true"
+    },
+    ...options
+  });
+}
+
+function codexFailureMessage(result) {
+  const output = [result.stdout, result.stderr].filter(Boolean).join("\n");
+  if (output.includes("Incorrect API key provided") || output.includes("401 Unauthorized")) {
+    return "Codex authentication failed. Set a valid OpenAI API key or run `codex login` before using --runtime codex.";
+  }
+  if (output.includes("failed to stat skills entry") || output.includes("failed to load skill")) {
+    return "Codex runtime found broken or invalid local skill entries. Clean up ~/.codex/skills and ~/.agents/skills before using --runtime codex.";
+  }
+  if (result.error?.code === "ENOENT") {
+    return "Codex CLI is not installed or not on PATH.";
+  }
+  return output.trim() || result.error?.message || "Codex exec failed for an unknown reason.";
+}
+
+function runCodexPreflight(reviewDir) {
+  const schemaPath = join(reviewDir, "codex-preflight-schema.json");
+  const outputPath = join(reviewDir, "codex-preflight-result.json");
+  writeFileSync(
+    schemaPath,
+    JSON.stringify(
+      {
+        type: "object",
+        additionalProperties: false,
+        required: ["ok"],
+        properties: {
+          ok: { type: "boolean" }
+        }
+      },
+      null,
+      2
+    )
+  );
+
+  const result = runCommand(
+    "codex",
+    [
+      "exec",
+      "--ephemeral",
+      "--skip-git-repo-check",
+      "--cd",
+      reviewDir,
+      "--sandbox",
+      "read-only",
+      "--output-schema",
+      schemaPath,
+      "-o",
+      outputPath,
+      "Return exactly {\"ok\":true}."
+    ],
+    { stdio: "pipe" }
+  );
+
+  if (result.status !== 0) {
+    throw new Error(codexFailureMessage(result));
+  }
+}
+
+function runCodexSpecialist(bundle, reviewDir, specialist) {
+  const schemaPath = join(reviewDir, `${specialist}-schema.json`);
+  const outputPath = join(reviewDir, `${specialist}-result.json`);
+  writeFileSync(schemaPath, JSON.stringify(specialistSchema(), null, 2));
+
+  const result = runCommand(
+    "codex",
+    [
+      "exec",
+      "--ephemeral",
+      "--skip-git-repo-check",
+      "--cd",
+      reviewDir,
+      "--sandbox",
+      "read-only",
+      "--output-schema",
+      schemaPath,
+      "-o",
+      outputPath,
+      buildCodexPrompt(bundle.path, specialist)
+    ],
+    { stdio: "pipe" }
+  );
+
+  if (result.status !== 0) {
+    throw new Error(`Codex specialist runner failed for ${specialist}: ${codexFailureMessage(result)}`);
+  }
+
+  const raw = readJson(outputPath);
+  const findings = Array.isArray(raw.findings) ? raw.findings : [];
+  return { specialist, findings };
 }
 
 function runMockSpecialist(specialist, sourceFiles, manifest) {
@@ -192,9 +358,20 @@ function main() {
   const sourceBundleText = readFileSync(manifest.source_bundle, "utf8");
   const sourceFiles = parseSourceBundle(sourceBundleText);
   const bundleResults = [];
+  const reviewDir = dirname(args.manifest);
+
+  if (args.runtime === "codex") {
+    runCodexPreflight(reviewDir);
+  }
 
   for (const bundle of manifest.bundles) {
-    bundleResults.push(runMockSpecialist(bundle.specialist, sourceFiles, manifest));
+    if (args.runtime === "mock") {
+      bundleResults.push(runMockSpecialist(bundle.specialist, sourceFiles, manifest));
+    } else if (args.runtime === "codex") {
+      bundleResults.push(runCodexSpecialist(bundle, reviewDir, bundle.specialist));
+    } else {
+      throw new Error(`Unsupported runtime: ${args.runtime}`);
+    }
   }
 
   const output = {
@@ -203,7 +380,7 @@ function main() {
     resolution_state: manifest.resolution_state,
     framework: manifest.framework,
     complexity_band: manifest.complexity_band,
-    runner: "mock-specialist-runner",
+    runner: args.runtime === "codex" ? "codex-exec-runner" : "mock-specialist-runner",
     specialist_results: bundleResults
   };
 

@@ -6,7 +6,8 @@ function parseArgs(argv) {
   const args = {
     program: null,
     requestedAction: "integrate",
-    outDir: null
+    outDir: null,
+    runtime: process.env.SEALEVEL_GUARD_RUNTIME || "mock"
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -17,6 +18,8 @@ function parseArgs(argv) {
       args.requestedAction = argv[++i] || "integrate";
     } else if (value === "--out-dir") {
       args.outDir = argv[++i] || null;
+    } else if (value === "--runtime") {
+      args.runtime = argv[++i] || "mock";
     } else if (value === "--help" || value === "-h") {
       printHelp();
       process.exit(0);
@@ -38,7 +41,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/review-program.mjs --program <PROGRAM_ADDRESS> [--requested-action <ship|integrate|allocate>] [--out-dir <DIR>]
+  node scripts/review-program.mjs --program <PROGRAM_ADDRESS> [--requested-action <ship|integrate|allocate>] [--out-dir <DIR>] [--runtime <mock|codex>]
 `);
 }
 
@@ -80,7 +83,13 @@ function main() {
 
   execFileSync(
     "node",
-    [join(process.cwd(), "scripts/run-specialists.mjs"), "--manifest", manifestPath],
+    [
+      join(process.cwd(), "scripts/run-specialists.mjs"),
+      "--manifest",
+      manifestPath,
+      "--runtime",
+      args.runtime
+    ],
     { stdio: "inherit" }
   );
 
