@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "resolve-program": "node scripts/resolve-program-address.mjs"
+    "resolve-program": "node scripts/resolve-program-address.mjs",
+    "build-bundles": "node scripts/build-review-bundles.mjs",
+    "review-program": "node scripts/review-program.mjs"
   }
 }

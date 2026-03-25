@@ -161,9 +161,10 @@ function listRelevantFiles(rootDir) {
       const normalized = `/${rel.replaceAll("\\", "/")}`;
       const included =
         normalized === "/Anchor.toml" ||
-        normalized.endsWith("/Cargo.toml") ||
-        normalized.endsWith(".rs") ||
-        normalized.includes("/idl/");
+        normalized === "/Cargo.toml" ||
+        /^\/programs\/[^/]+\/Cargo\.toml$/.test(normalized) ||
+        /^\/programs\/[^/]+\/src\/.*\.rs$/.test(normalized) ||
+        /(^|\/)idl\/.*\.json$/.test(normalized);
 
       if (!included) {
         return false;
@@ -243,7 +244,22 @@ async function main() {
     return;
   }
 
-  const parsedRepo = parseGithubTreeUrl(verified.repo_url);
+  if (verified.commit === "None") {
+    result.reason = "Verified metadata exists, but no exact commit was provided for source snapshot resolution.";
+    writeResolution(args.outDir, result);
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  let parsedRepo;
+  try {
+    parsedRepo = parseGithubTreeUrl(verified.repo_url);
+  } catch (error) {
+    result.reason = `Verified metadata exists, but repo URL is not pinned to an exact tree snapshot: ${error.message || String(error)}`;
+    writeResolution(args.outDir, result);
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
   const tarballUrl = `https://codeload.github.com/${parsedRepo.owner}/${parsedRepo.repo}/tar.gz/${parsedRepo.commit}`;
   const tarballPath = join(args.outDir, `${parsedRepo.repo}-${parsedRepo.commit}.tar.gz`);
   const extractDir = join(args.outDir, "source");
