@@ -12,6 +12,7 @@ Produce a final trust-gate report that is readable by both:
 ### 1. Summary
 
 - target
+- resolution state
 - framework
 - complexity band
 - requested action
@@ -45,6 +46,7 @@ If a non-rejected `LEAD` survives to the report, place it in a separate
 Include a final JSON block with:
 
 - target
+- resolution_state
 - framework
 - complexity band
 - requested action
@@ -57,6 +59,12 @@ Include a final JSON block with:
 The JSON should conform to:
 
 - `shared/risk-brief.schema.json`
+
+For first release, `resolution_state` should realistically be one of:
+
+- `verified_source_available`
+- `metadata_only`
+- `unsupported`
 
 ## Style
 

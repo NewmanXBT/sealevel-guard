@@ -23,13 +23,13 @@ This is not:
 
 ## Inputs
 
-Expected inputs can include:
+Primary expected input:
 
-- local path
-- repository URL
-- zip archive
-- program ID
-- optional IDL
+- `program_address`
+
+Optional inputs:
+
+- optional verified source metadata
 - requested depth
 - requested action:
   - `ship`
@@ -43,13 +43,14 @@ If `requested_action` is omitted, default to `integrate`.
 First release support:
 
 - Anchor-first Solana programs
-- recognizable `programs/*/src/**/*.rs` style layouts
-- codebases with clear account and instruction structure
+- program addresses with resolvable review context
+- codebases with clear account and instruction structure when verified source is
+  available
 
 Out of scope for first release:
 
 - arbitrary non-Solana repos
-- broad native Rust support
+- broad native Rust support without verified source
 - token-only market analysis
 
 ## Orchestration Flow
@@ -57,28 +58,32 @@ Out of scope for first release:
 ### Turn 1 — Discover
 
 1. Detect whether the target is plausibly a Solana repo.
-2. Check for:
-   - `Anchor.toml`
-   - `Cargo.toml`
-   - `programs/*/src/**/*.rs`
-   - optional IDL files
-3. Exclude:
-   - `tests/`
-   - `target/`
-   - `migrations/`
-   - `examples/`
-   - generated output
-   - obvious mock or benchmark files
-4. Determine:
+2. Resolve the richest available review context from the `program_address`.
+3. Determine:
    - supported vs unsupported
    - Anchor vs uncertain native Rust
+   - verified source vs metadata-only
    - likely complexity band
 
 If unsupported, stop and return `unsupported`.
 
 #### Discover Rules
 
-Use these inclusion patterns first:
+Start from `program_address`.
+
+Then attempt resolution in this order:
+
+1. fetch program account metadata
+2. attempt verified-build metadata lookup
+3. if verified source metadata exists, fetch the corresponding source snapshot
+
+Resolution states:
+
+- `verified_source_available`
+- `metadata_only`
+- `unsupported`
+
+Use these source inclusion patterns only after verified source is available:
 
 - `Anchor.toml`
 - `Cargo.toml`
@@ -102,11 +107,11 @@ Exclude these paths by default:
 Support classification:
 
 - `anchor`
-  - `Anchor.toml` present and at least one `programs/*/src/**/*.rs` file found
+  - verified source clearly shows Anchor structure
 - `solana-native-uncertain`
-  - Rust and Cargo files suggest Solana, but no clear Anchor structure
+  - Solana program metadata exists, but no clear Anchor structure
 - `unsupported`
-  - no credible Solana program structure found
+  - no credible Solana program structure or review context found
 
 Complexity band heuristics:
 
@@ -115,12 +120,16 @@ Complexity band heuristics:
 - `tier_2`
   - multi-program or heavier Anchor layout
 - `tier_3`
-  - uncertain native Rust, unusually large program surface, or multi-program
-    complexity
+  - uncertain native Rust, unusually large program surface, multi-program
+    complexity, or metadata-only review context
 
 ### Turn 2 — Prepare
 
-Build a source bundle containing all in-scope files.
+Build a source bundle only when verified source is available.
+
+If only metadata is available, build a minimal metadata bundle and reduce review
+scope accordingly. Interface-level IDL review is future work and should not be
+presented as a first-release capability.
 
 Then prepare specialist review bundles for:
 
@@ -141,7 +150,7 @@ Each specialist should receive:
 
 #### Bundle Rules
 
-Create one `source.md` bundle that includes all in-scope source files.
+Create one `source.md` bundle when verified source is available.
 
 For each file, render:
 
@@ -154,7 +163,7 @@ For each file, render:
 
 Then create one bundle per specialist by concatenating:
 
-1. `source.md`
+1. `source.md` or metadata bundle
 2. `shared/shared-rules.md`
 3. `shared/judging.md`
 4. `shared/report-formatting.md`
@@ -172,6 +181,7 @@ Recommended bundle names:
 Every bundle should include:
 
 - target identifier
+- resolution state
 - framework classification
 - complexity band
 - requested action
@@ -181,6 +191,11 @@ Every bundle should include:
 Run specialist reviews in parallel.
 
 Each specialist is responsible for one trust surface only.
+
+Specialists must adapt confidence to the resolution state:
+
+- highest confidence when verified source is available
+- highly constrained confidence for metadata-only review
 
 If a specialist is uncertain but sees a plausible lead, it should still emit the
 lead with confidence and evidence rather than silently dropping it.
@@ -348,10 +363,12 @@ Always return:
 
 ```json
 {
-  "target": "repo_or_program",
+  "target": "program_address",
+  "resolution_state": "verified_source_available",
   "framework": "anchor",
   "complexity_band": "tier_1",
   "requested_action": "integrate",
+  "supported": true,
   "risk_score": 64,
   "recommendation": "warn",
   "ship_blocker": false,
@@ -381,13 +398,14 @@ The final result must contain:
 Minimum top-level fields:
 
 - `target`
+- `resolution_state`
 - `framework`
 - `complexity_band`
 - `requested_action`
+- `supported`
 - `recommendation`
 - `risk_score`
 - `ship_blocker`
-- `supported`
 - `findings`
 
 Each finding must contain:

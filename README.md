@@ -9,8 +9,9 @@ a structured risk brief that upstream agents can use to allow, warn, deny, or
 escalate an action.
 
 > [!NOTE]
-> Current status: planning and product-spec repository. No production
-> implementation is published yet.
+> Current status: early planning repo with an address-resolution prototype.
+> The first implemented path is `program address -> verified build -> source
+> snapshot`. Interface-level review remains future work.
 
 ## Why It Exists
 

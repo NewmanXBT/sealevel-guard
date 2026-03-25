@@ -1,0 +1,8 @@
+{
+  "name": "sealevel-guard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "resolve-program": "node scripts/resolve-program-address.mjs"
+  }
+}

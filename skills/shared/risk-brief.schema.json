@@ -7,6 +7,7 @@
   "required": [
     "target",
     "framework",
+    "resolution_state",
     "complexity_band",
     "requested_action",
     "supported",
@@ -24,6 +25,14 @@
       "enum": [
         "anchor",
         "solana-native-uncertain",
+        "unsupported"
+      ]
+    },
+    "resolution_state": {
+      "type": "string",
+      "enum": [
+        "verified_source_available",
+        "metadata_only",
         "unsupported"
       ]
     },
