@@ -48,6 +48,9 @@ function main() {
   mkdirSync(reviewDir, { recursive: true });
 
   const resolutionPath = join(reviewDir, "resolution.json");
+  const manifestPath = join(reviewDir, "bundle-manifest.json");
+  const specialistFindingsPath = join(reviewDir, "specialist-findings.json");
+  const judgedPath = join(reviewDir, "judged-risk-brief.json");
 
   execFileSync(
     "node",
@@ -72,6 +75,24 @@ function main() {
       "--requested-action",
       args.requestedAction
     ],
+    { stdio: "inherit" }
+  );
+
+  execFileSync(
+    "node",
+    [join(process.cwd(), "scripts/run-specialists.mjs"), "--manifest", manifestPath],
+    { stdio: "inherit" }
+  );
+
+  execFileSync(
+    "node",
+    [join(process.cwd(), "scripts/judge-findings.mjs"), "--findings", specialistFindingsPath],
+    { stdio: "inherit" }
+  );
+
+  execFileSync(
+    "node",
+    [join(process.cwd(), "scripts/emit-risk-report.mjs"), "--judged", judgedPath],
     { stdio: "inherit" }
   );
 }

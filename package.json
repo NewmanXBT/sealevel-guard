@@ -5,6 +5,9 @@
   "scripts": {
     "resolve-program": "node scripts/resolve-program-address.mjs",
     "build-bundles": "node scripts/build-review-bundles.mjs",
+    "run-specialists": "node scripts/run-specialists.mjs",
+    "judge-findings": "node scripts/judge-findings.mjs",
+    "emit-risk-report": "node scripts/emit-risk-report.mjs",
     "review-program": "node scripts/review-program.mjs"
   }
 }
