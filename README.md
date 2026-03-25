@@ -91,6 +91,8 @@ This repository currently contains the product framing for the project:
 - [Narrative](./docs/NARRATIVE.md)
 - [Positioning](./docs/POSITIONING.md)
 - [Product Spec](./docs/PRODUCT_SPEC.md)
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Roadmap](./docs/ROADMAP.md)
 - [X Article Draft](./docs/X_ARTICLE.md)
 
 ## Positioning
