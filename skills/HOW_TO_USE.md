@@ -36,6 +36,33 @@ If no action is provided, the default is:
 
 - `integrate`
 
+### Local runtime command
+
+From the repository root:
+
+```bash
+npm run review-program -- \
+  --program <PROGRAM_ADDRESS_OR_LOCAL_PATH> \
+  --requested-action <ship|integrate|allocate> \
+  --runtime <mock|codex>
+```
+
+Examples:
+
+```bash
+npm run review-program -- \
+  --program 5JsSAL3kJDUWD4ZveYXYZmgm1eVqueesTZVdAvtZg8cR \
+  --requested-action integrate \
+  --runtime mock
+```
+
+```bash
+npm run review-program -- \
+  --program ./fixtures/example-anchor-program \
+  --requested-action ship \
+  --runtime codex
+```
+
 ## What The Orchestrator Does
 
 The orchestrator is responsible for:
@@ -99,7 +126,7 @@ per:
 ### Normal user flow
 
 ```text
-run sealevel-guard-review
+run review-program / sealevel-guard-review
   -> resolve program metadata
   -> resolve verified-build metadata
   -> fetch verified source snapshot when available
