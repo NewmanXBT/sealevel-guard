@@ -1,8 +1,6 @@
 ---
 name: sealevel-guard-review
 description: Orchestrates parallelized Solana trust-gate review to determine whether a codebase or program is safe enough to ship, integrate, or allocate capital through. Use when asked to review, audit, or assess risk of a Solana program.
-argument-hint: [program_address]
-disable-model-invocation: true
 ---
 
 # Sealevel Guard Review
@@ -32,7 +30,11 @@ This is not:
 
 Primary expected input:
 
-- `program_address`
+- `program_address` or `local_path`
+
+The input can be:
+- An on-chain Solana program address (e.g., `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623TQ5rt`)
+- A local file path to a Solana program directory (e.g., `/path/to/program` or `./program`)
 
 Optional inputs:
 
@@ -64,9 +66,14 @@ Out of scope for first release:
 
 ### Turn 1 — Discover
 
-1. Detect whether the target is plausibly a Solana repo.
-2. Resolve the richest available review context from the `program_address`.
-3. Determine:
+1. Detect whether the input is an on-chain program address or a local path.
+2. If on-chain address:
+   - Resolve the richest available review context by downloading source code
+   - Run `node scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS>`
+3. If local path:
+   - Skip source download and proceed directly to workflow
+   - Use the local path as the source root
+4. Determine:
    - supported vs unsupported
    - Anchor vs uncertain native Rust
    - verified source vs metadata-only
@@ -74,7 +81,19 @@ Out of scope for first release:
 
 If unsupported, stop and return `unsupported`.
 
-#### Discover Rules
+#### Address Detection Logic
+
+To determine if the input is an on-chain address or local path:
+
+- If the input matches a Solana public key pattern (base58 encoded, 32-44 characters):
+  - Treat as an on-chain program address
+  - Proceed with resolution and download
+- If the input is a valid file system path (absolute or relative):
+  - Treat as a local path
+  - Skip `resolve-program-address.mjs`
+  - Use the local path as the source root for subsequent workflow steps
+
+#### Discover Rules (On-Chain Addresses)
 
 Start from `program_address`.
 
@@ -86,11 +105,25 @@ Then attempt resolution in this order:
 
 Resolution states:
 
-- `verified_source_available`
+- `verified_source_available` (on-chain with verified source)
+- `local_source_available` (local path)
 - `metadata_only`
 - `unsupported`
 
-Use these source inclusion patterns only after verified source is available:
+#### Discover Rules (Local Paths)
+
+For local paths:
+
+1. Validate that the path exists and is a directory
+2. Check for standard Solana program structure indicators:
+   - `Anchor.toml` or `Cargo.toml` presence
+   - `programs/` directory structure
+   - `.rs` source files
+3. Set resolution state to `local_source_available`
+4. Proceed directly to Turn 2 (Prepare) without running `resolve-program-address.mjs`
+5. Use the local path as the `source_root` for bundle creation
+
+Use these source inclusion patterns for both on-chain verified source and local paths:
 
 - `Anchor.toml`
 - `Cargo.toml`
@@ -370,7 +403,7 @@ Always return:
 
 ```json
 {
-  "target": "program_address",
+  "target": "program_address_or_local_path",
   "resolution_state": "verified_source_available",
   "framework": "anchor",
   "complexity_band": "tier_1",
@@ -382,6 +415,12 @@ Always return:
   "findings": []
 }
 ```
+
+The `resolution_state` can be:
+- `verified_source_available` - on-chain program with verified source
+- `local_source_available` - local directory path
+- `metadata_only` - on-chain program without verified source
+- `unsupported` - cannot be evaluated
 
 The final JSON should conform to:
 

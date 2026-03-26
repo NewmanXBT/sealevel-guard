@@ -36,7 +36,7 @@ function parseArgs(argv) {
   }
 
   if (!args.outDir) {
-    args.outDir = join(process.cwd(), "artifacts", "resolutions", args.program);
+    args.outDir = join(process.cwd(), "artifacts", "resolutions", args.program.replace(/\//g, "_").replace(/\\/g, "_"));
   }
 
   return args;
@@ -185,10 +185,58 @@ function listRelevantFiles(rootDir) {
     .sort();
 }
 
+function isLocalPath(input) {
+  // Check if it looks like a local path
+  return (
+    input.startsWith("./") ||
+    input.startsWith("../") ||
+    input.startsWith("/") ||
+    input.match(/^[a-zA-Z]:\\/) || // Windows path
+    input.includes("/") ||
+    input.includes("\\")
+  );
+}
+
+function pathExists(path) {
+  try {
+    const stats = execFileSync("test", ["-d", path], { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   mkdirSync(args.outDir, { recursive: true });
 
+  // Check if input is a local path or on-chain address
+  if (isLocalPath(args.program)) {
+    if (!pathExists(args.program)) {
+      throw new Error(`Local path does not exist: ${args.program}`);
+    }
+
+    // Handle local path
+    const sourceFiles = listRelevantFiles(args.program);
+
+    const result = {
+      target: args.program,
+      resolver_version: "0.1.0",
+      resolution_state: "local_source_available",
+      steps: ["local_path_detected"],
+      source_snapshot: {
+        source_root: args.program,
+        source_file_count: sourceFiles.length,
+        source_files: sourceFiles
+      }
+    };
+
+    writeResolution(args.outDir, result);
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  // Handle on-chain program address
   const result = {
     target: args.program,
     resolver_version: "0.1.0",

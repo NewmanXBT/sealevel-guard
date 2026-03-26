@@ -1,0 +1,44 @@
+# Review Context
+
+- target: 5JsSAL3kJDUWD4ZveYXYZmgm1eVqueesTZVdAvtZg8cR
+- resolution_state: metadata_only
+- framework: solana-native-uncertain
+- complexity_band: tier_3
+- requested_action: integrate
+
+# Metadata Bundle
+
+```json
+{
+  "target": "5JsSAL3kJDUWD4ZveYXYZmgm1eVqueesTZVdAvtZg8cR",
+  "resolver_version": "0.1.0",
+  "rpc_url": "https://api.mainnet-beta.solana.com",
+  "verified_status_url": "https://verify.osec.io/status",
+  "resolution_state": "metadata_only",
+  "steps": [
+    "program_metadata",
+    "verified_build_metadata"
+  ],
+  "program_metadata": {
+    "executable": true,
+    "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
+    "lamports": 1141440,
+    "space": 36
+  },
+  "verified_build_lookup": {
+    "status": "ok"
+  },
+  "verified_build": {
+    "is_verified": false,
+    "message": "On chain program not verified",
+    "on_chain_hash": "",
+    "executable_hash": "",
+    "repo_url": "",
+    "commit": "",
+    "last_verified_at": null,
+    "is_frozen": false,
+    "is_closed": false
+  },
+  "reason": "Verified source was not found for this program address."
+}
+```
