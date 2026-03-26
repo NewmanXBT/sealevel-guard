@@ -4,6 +4,9 @@ import { join, relative } from "node:path";
 
 const DEFAULT_RPC_URL = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const DEFAULT_VERIFIED_STATUS_URL = process.env.SOLANA_VERIFIED_STATUS_URL || "https://verify.osec.io/status";
+const GITHUB_API_TOKEN = process.env.GITHUB_TOKEN || null;
+// Allow overriding the output base directory (useful when script is called from a different directory)
+const OUTPUT_BASE_DIR = process.env.SEALEVEL_GUARD_OUTPUT_DIR || process.env.PWD || process.cwd();
 
 function parseArgs(argv) {
   const args = {
@@ -36,7 +39,9 @@ function parseArgs(argv) {
   }
 
   if (!args.outDir) {
-    args.outDir = join(process.cwd(), "artifacts", "resolutions", args.program.replace(/\//g, "_").replace(/\\/g, "_"));
+    // Use OUTPUT_BASE_DIR if set (typically the caller's working directory), otherwise use current directory
+    const baseDir = OUTPUT_BASE_DIR;
+    args.outDir = join(baseDir, ".atifacts", "resolutions", args.program.replace(/\//g, "_").replace(/\\/g, "_"));
   }
 
   return args;
@@ -44,11 +49,37 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS> [--out-dir <DIR>] [--rpc-url <URL>] [--verified-status-url <URL>]
+  node scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS|LOCAL_PATH> [--out-dir <DIR>] [--rpc-url <URL>] [--verified-status-url <URL>]
+
+Arguments:
+  --program              Solana program address (base58) OR local path to program directory
+  --out-dir              Output directory for resolution results (default: .atifacts/resolutions/<program> in current working directory)
+  --rpc-url              Solana RPC endpoint (default: https://api.mainnet-beta.solana.com)
+  --verified-status-url  Verified build status endpoint (default: https://verify.osec.io/status)
 
 Environment:
-  SOLANA_RPC_URL             Override the default mainnet RPC endpoint.
-  SOLANA_VERIFIED_STATUS_URL Override the verified-build status endpoint.
+  SOLANA_RPC_URL             Override the default mainnet RPC endpoint
+  SOLANA_VERIFIED_STATUS_URL Override the verified-build status endpoint
+  GITHUB_TOKEN               Optional: GitHub token for increased API rate limits during search
+  SEALEVEL_GUARD_OUTPUT_DIR  Base directory for .atifacts/ (default: $PWD or current directory)
+                              Use this when calling from a different directory than where you want output
+
+Resolution States:
+  local_source_available     Input was a local file path - source read directly
+  verified_source_available  Downloaded from verified build metadata (osec.io)
+  github_search_available    Downloaded from GitHub search (best-effort, lower confidence)
+  metadata_only              Only program metadata available - no source code
+  unsupported                Unable to resolve program or download source
+
+Examples:
+  # Resolve on-chain program with verified source
+  node scripts/resolve-program-address.mjs --program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623TQ5rt
+
+  # Use local program directory
+  node scripts/resolve-program-address.mjs --program ./my-anchor-program
+
+  # Use custom RPC endpoint
+  node scripts/resolve-program-address.mjs --program <ADDRESS> --rpc-url https://your-rpc.com
 `);
 }
 
@@ -114,6 +145,93 @@ async function getProgramAccountInfo(program, rpcUrl) {
 
 async function getVerifiedStatus(program, verifiedStatusUrl) {
   return fetchJson(`${verifiedStatusUrl.replace(/\/$/, "")}/${program}`);
+}
+
+async function searchGitHubForProgram(programAddress, githubToken = null) {
+  // Try to find the program's source code on GitHub
+  // This searches for the program address in GitHub repositories
+
+  const searchQueries = [
+    `${programAddress}`,  // Direct address search
+    `declare_id!("${programAddress}")`,  // Anchor pattern
+    `${programAddress.slice(0, 8)}...${programAddress.slice(-8)}`  // Shortened pattern
+  ];
+
+  const headers = {
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "sealevel-guard-resolver"
+  };
+
+  if (githubToken) {
+    headers["Authorization"] = `token ${githubToken}`;
+  }
+
+  for (const query of searchQueries) {
+    try {
+      const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}+language:rust`;
+      const response = await fetchJson(url, { headers });
+
+      if (response.items && response.items.length > 0) {
+        // Get the first matching repository
+        const item = response.items[0];
+        const owner = item.repository.owner.login;
+        const repo = item.repository.name;
+        const defaultBranch = item.repository.default_branch || "main";
+
+        return {
+          found: true,
+          owner,
+          repo,
+          default_branch: defaultBranch,
+          html_url: item.repository.html_url,
+          search_match: query,
+          confidence: "low"  // Search-based confidence is low
+        };
+      }
+    } catch (error) {
+      // Continue to next query
+      console.warn(`GitHub search failed for query "${query}": ${error.message}`);
+    }
+  }
+
+  return { found: false };
+}
+
+async function tryDownloadFromGitHubSearchResult(searchResult, outDir) {
+  if (!searchResult.found) {
+    return null;
+  }
+
+  try {
+    const tarballUrl = `https://codeload.github.com/${searchResult.owner}/${searchResult.repo}/tar.gz/${searchResult.default_branch}`;
+    const tarballPath = join(outDir, `${searchResult.repo}-${searchResult.default_branch}.tar.gz`);
+    const extractDir = join(outDir, "source");
+
+    mkdirSync(extractDir, { recursive: true });
+    await downloadFile(tarballUrl, tarballPath);
+    execFileSync("tar", ["-xzf", tarballPath, "-C", extractDir], { stdio: "inherit" });
+
+    const extractedRoot = join(extractDir, `${searchResult.repo}-${searchResult.default_branch}`);
+    const sourceFiles = listRelevantFiles(extractedRoot);
+
+    return {
+      source_snapshot: {
+        repo_url: searchResult.html_url,
+        commit: searchResult.default_branch,
+        branch: searchResult.default_branch,
+        tarball_url: tarballUrl,
+        extracted_root: extractedRoot,
+        source_root: extractedRoot,
+        source_file_count: sourceFiles.length,
+        source_files: sourceFiles,
+        search_based: true
+      },
+      search_result: searchResult
+    };
+  } catch (error) {
+    console.warn(`Failed to download from GitHub search result: ${error.message}`);
+    return null;
+  }
 }
 
 function parseGithubTreeUrl(repoUrl) {
@@ -199,7 +317,7 @@ function isLocalPath(input) {
 
 function pathExists(path) {
   try {
-    const stats = execFileSync("test", ["-d", path], { stdio: "pipe" });
+    execFileSync("test", ["-d", path], { stdio: "pipe" });
     return true;
   } catch {
     return false;
@@ -208,6 +326,57 @@ function pathExists(path) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  // Prevent running from within the skill directory itself
+  const currentDir = process.cwd();
+  const scriptDir = import.meta.url.slice(7); // Remove "file://"
+  const scriptDirectory = scriptDir.split('/').slice(0, -1).join('/'); // Remove filename
+
+  // Normalize paths for comparison
+  const normalizedCurrent = currentDir.replace(/\/$/, '');
+  const normalizedScriptDir = scriptDirectory.replace(/\/$/, '');
+
+  // Check if we're in a sealevel-guard-review directory
+  const isSkillDir =
+    normalizedCurrent.endsWith('sealevel-guard-review') ||
+    normalizedCurrent.endsWith('sealevel-guard-review/scripts') ||
+    normalizedCurrent.includes('/skills/sealevel-guard-review');
+
+  if (isSkillDir) {
+    console.error(`
+⚠️  Error: Cannot run from within the Sealevel Guard skill directory!
+
+You are currently in:
+  ${currentDir}
+
+This would create .atifacts/ in the skill directory instead of your project.
+
+Solution: Change to your project directory first:
+
+  cd /path/to/your/project
+
+Then run with one of these options:
+
+Option 1: Set environment variable (recommended)
+  export SEALEVEL_GUARD_OUTPUT_DIR=$PWD
+  node /path/to/sealevel-guard-review/scripts/resolve-program-address.mjs --program <ADDRESS>
+
+Option 2: Use --out-dir explicitly
+  node /path/to/sealevel-guard-review/scripts/resolve-program-address.mjs \\
+    --program <ADDRESS> \\
+    --out-dir $PWD/.atifacts/resolutions
+
+Option 3: Use absolute paths from your project directory
+  cd /path/to/your/project
+  node ~/sealevel-guard/skills/sealevel-guard-review/scripts/resolve-program-address.mjs \\
+    --program <ADDRESS>
+
+For more information, see:
+  https://github.com/anthropics/sealevel-guard
+`);
+    process.exit(1);
+  }
+
   mkdirSync(args.outDir, { recursive: true });
 
   // Check if input is a local path or on-chain address
@@ -279,14 +448,61 @@ async function main() {
       error: error.message || String(error)
     };
     result.verified_build = null;
-    result.reason = "Verified-build lookup failed; falling back to metadata-only.";
+
+    // Try GitHub search as fallback
+    console.warn("Verified build lookup failed, trying GitHub search...");
+    result.steps.push("github_search_attempt");
+
+    const githubSearch = await searchGitHubForProgram(args.program, GITHUB_API_TOKEN);
+
+    if (githubSearch.found) {
+      result.steps.push("github_search_found");
+      result.github_search = githubSearch;
+
+      const downloaded = await tryDownloadFromGitHubSearchResult(githubSearch, args.outDir);
+
+      if (downloaded) {
+        result.steps.push("github_search_download_success");
+        result.resolution_state = "github_search_available";
+        result.source_snapshot = downloaded.source_snapshot;
+        result.github_search_result = downloaded.search_result;
+
+        writeResolution(args.outDir, result);
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+    }
+
+    result.reason = "Verified-build lookup failed and GitHub search found no suitable source.";
     writeResolution(args.outDir, result);
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   if (!verified?.is_verified || !verified?.repo_url || !verified?.commit) {
-    result.reason = "Verified source was not found for this program address.";
+    // Verified build exists but incomplete - try GitHub search
+    result.steps.push("github_search_attempt_fallback");
+    const githubSearch = await searchGitHubForProgram(args.program, GITHUB_API_TOKEN);
+
+    if (githubSearch.found) {
+      result.steps.push("github_search_found");
+      result.github_search = githubSearch;
+
+      const downloaded = await tryDownloadFromGitHubSearchResult(githubSearch, args.outDir);
+
+      if (downloaded) {
+        result.steps.push("github_search_download_success");
+        result.resolution_state = "github_search_available";
+        result.source_snapshot = downloaded.source_snapshot;
+        result.github_search_result = downloaded.search_result;
+
+        writeResolution(args.outDir, result);
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+    }
+
+    result.reason = "Verified source was not found for this program address and GitHub search found no suitable source.";
     writeResolution(args.outDir, result);
     console.log(JSON.stringify(result, null, 2));
     return;
