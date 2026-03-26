@@ -38,6 +38,7 @@ The input can be:
 
 Optional inputs:
 
+- `output_dir` - Custom output directory for review artifacts
 - optional verified source metadata
 - requested depth
 - requested action:
@@ -46,6 +47,65 @@ Optional inputs:
   - `allocate`
 
 If `requested_action` is omitted, default to `integrate`.
+
+### Working Directory Behavior
+
+**Important**: When running scripts, the `.atifacts/` output directory will be created relative to the current working directory. If the skill changes to its own directory before execution, set the `SEALEVEL_GUARD_OUTPUT_DIR` environment variable to control where artifacts are written:
+
+```bash
+# From your project directory
+export SEALEVEL_GUARD_OUTPUT_DIR=$PWD
+cd /path/to/sealevel-guard-review
+node scripts/review-program.mjs --program <ADDRESS>
+# Output: $PWD/.atifacts/... (your original directory)
+```
+
+Alternatively, always use explicit `--out-dir`:
+
+```bash
+node scripts/review-program.mjs \
+  --program <ADDRESS> \
+  --out-dir /path/to/your/project/.atifacts/reviews
+```
+
+### Output Location
+
+By default, review artifacts are written to `.atifacts/` in the current working directory:
+
+```
+.atifacts/reviews/<program_address_or_path>/
+├── resolution.json              # Program resolution result
+├── specialist-findings.json     # Raw specialist outputs
+├── judged-risk-brief.json       # Final judged results
+├── report.md                    # Markdown report
+└── risk-report.json             # Machine-readable risk brief
+```
+
+For on-chain addresses, downloaded source code is cached at:
+
+```
+.atifacts/resolutions/<program_address>/
+├── resolution.json
+├── <repo>-<commit>.tar.gz       # Downloaded source archive
+└── source/
+    └── <repo>-<commit>/         # Extracted source code
+```
+
+**Note**: `.atifacts/` is a hidden directory (starts with a dot) to keep your project clean while maintaining easy access to review artifacts.
+
+Specify a custom output directory using:
+
+```bash
+node scripts/review-program.mjs \
+  --program <ADDRESS_OR_PATH> \
+  --out-dir /path/to/custom/output
+```
+
+When using a custom output directory, artifacts will be written to:
+
+```
+<path/to/custom/output>/<program_address_or_path>/
+```
 
 ## Scope Detection
 
@@ -64,12 +124,28 @@ Out of scope for first release:
 
 ## Orchestration Flow
 
+### Turn 0 — Pre-flight Check
+
+**Important**: Scripts will refuse to run from within the Sealevel Guard skill directory itself.
+
+The scripts detect if the current working directory is:
+- The skill directory (`.../sealevel-guard-review/`)
+- The scripts subdirectory (`.../sealevel-guard-review/scripts/`)
+- Any path containing `/skills/sealevel-guard-review/`
+
+If detected, execution is blocked with a helpful error message directing you to:
+1. Change to your project directory, OR
+2. Use `--out-dir` to explicitly specify output location, OR
+3. Set `SEALEVEL_GUARD_OUTPUT_DIR` environment variable
+
+This prevents creating `.atifacts/` in the skill directory instead of your project.
+
 ### Turn 1 — Discover
 
 1. Detect whether the input is an on-chain program address or a local path.
 2. If on-chain address:
    - Resolve the richest available review context by downloading source code
-   - Run `node scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS>`
+   - Run `node scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS> [--out-dir <DIR>]`
 3. If local path:
    - Skip source download and proceed directly to workflow
    - Use the local path as the source root
@@ -80,6 +156,8 @@ Out of scope for first release:
    - likely complexity band
 
 If unsupported, stop and return `unsupported`.
+
+**Output**: All resolution results are written to `<output_dir>/<program_address>/resolution.json`
 
 #### Address Detection Logic
 
@@ -105,7 +183,8 @@ Then attempt resolution in this order:
 
 Resolution states:
 
-- `verified_source_available` (on-chain with verified source)
+- `verified_source_available` (on-chain with verified source from osec.io)
+- `github_search_available` (on-chain, source found via GitHub search - lower confidence)
 - `local_source_available` (local path)
 - `metadata_only`
 - `unsupported`
@@ -121,7 +200,7 @@ For local paths:
    - `.rs` source files
 3. Set resolution state to `local_source_available`
 4. Proceed directly to Turn 2 (Prepare) without running `resolve-program-address.mjs`
-5. Use the local path as the `source_root` for bundle creation
+5. Use the local path as the source root for review
 
 Use these source inclusion patterns for both on-chain verified source and local paths:
 
@@ -165,70 +244,23 @@ Complexity band heuristics:
 
 ### Turn 2 — Prepare
 
-Build a source bundle only when verified source is available.
+Analyze the program and prepare review context.
 
-If only metadata is available, build a minimal metadata bundle and reduce review
-scope accordingly. Interface-level IDL review is future work and should not be
-presented as a first-release capability.
+Read `resolution.json` from Turn 1 to determine:
 
-Then prepare specialist review bundles for:
+- **Framework**: Anchor or Solana Native
+  - Check for `Anchor.toml` or `programs/*/` structure
+  - If present → `anchor`
+  - Otherwise → `solana-native-uncertain`
 
-- access-control
-- pda-integrity
-- account-constraints
-- cpi-risk
-- token-invariants
-- governance-upgrade-risk
-
-Each specialist should receive:
-
-- the same source bundle
-- shared rules
-- judging rules
-- report formatting expectations
-- and its own specialist instructions
-
-#### Bundle Rules
-
-Create one `source.md` bundle when verified source is available.
-
-For each file, render:
-
-```md
-### relative/path/to/file.rs
-```rust
-...source...
-```
-```
-
-Then create one bundle per specialist by concatenating:
-
-1. `source.md` or metadata bundle
-2. `shared/shared-rules.md`
-3. `shared/judging.md`
-4. `shared/report-formatting.md`
-5. the specialist agent instructions
-
-Recommended bundle names:
-
-- `access-control-bundle.md`
-- `pda-integrity-bundle.md`
-- `account-constraints-bundle.md`
-- `cpi-risk-bundle.md`
-- `token-invariants-bundle.md`
-- `governance-upgrade-risk-bundle.md`
-
-Every bundle should include:
-
-- target identifier
-- resolution state
-- framework classification
-- complexity band
-- requested action
+- **Complexity Band**:
+  - `tier_1` - Single program, modest code footprint
+  - `tier_2` - Multi-program or heavier Anchor layout
+  - `tier_3` - Uncertain native Rust, large surface, or metadata-only
 
 ### Turn 3 — Run Specialists
 
-Run specialist reviews in parallel.
+Run specialist reviews in parallel for these trust surfaces:
 
 Each specialist is responsible for one trust surface only.
 
@@ -479,3 +511,120 @@ Do not stop at "this code has issues."
 Always answer:
 
 - should another agent trust this enough to act?
+
+## Usage Examples
+
+### Example 1: Review On-Chain Program (Default Output)
+
+```bash
+node skills/sealevel-guard-review/scripts/review-program.mjs \
+  --program 12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF \
+  --requested-action integrate
+```
+
+**Output location**: `.atifacts/reviews/12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF/` (in current working directory)
+
+**Source cache**: `.atifacts/resolutions/12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF/` (in current working directory)
+
+### Example 2: Review Local Program with Custom Output
+
+```bash
+node skills/sealevel-guard-review/scripts/review-program.mjs \
+  --program ./my-anchor-program \
+  --requested-action ship \
+  --out-dir /tmp/my-security-audits
+```
+
+**Output location**: `/tmp/my-security-audits/./my-anchor-program/`
+
+### Example 3: Review with Custom RPC and Output Directory
+
+```bash
+SOLANA_RPC_URL=https://my-rpc.com \
+node skills/sealevel-guard-review/scripts/review-program.mjs \
+  --program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623TQ5rt \
+  --requested-action allocate \
+  --out-dir ./audits/$(date +%Y-%m-%d)
+```
+
+**Output location**: `./audits/2025-03-26/TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623TQ5rt/`
+
+### Example 4: Only Resolve Program Address (No Review)
+
+```bash
+node skills/sealevel-guard-review/scripts/resolve-program-address.mjs \
+  --program 12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF \
+  --out-dir ./downloads
+```
+
+**Output**:
+- `./downloads/12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF/resolution.json`
+- `./downloads/12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF/<repo>-<commit>.tar.gz`
+- `./downloads/12UJoD4VRHneWXoy1j4k3KTACP8ZYX55sS4sbwzuk8KF/source/<repo>-<commit>/`
+
+## Output File Reference
+
+### Resolution Output (`resolution.json`)
+
+Generated by `resolve-program-address.mjs`:
+
+```json
+{
+  "target": "program_address_or_path",
+  "resolution_state": "verified_source_available | local_source_available | github_search_available | metadata_only | unsupported",
+  "source_snapshot": {
+    "source_root": "/path/to/source",
+    "source_files": ["Anchor.toml", "programs/..."],
+    "source_file_count": 42
+  }
+}
+```
+
+### Final Review Output
+
+Generated by the complete workflow:
+
+```
+<output_dir>/<target>/
+├── specialist-findings.json      # Raw outputs from all specialists
+├── judged-risk-brief.json        # Final judged and deduplicated findings
+├── report.md                     # Human-readable markdown report
+└── risk-report.json              # Machine-readable risk brief
+```
+
+## Directory Structure Best Practices
+
+### Organizing Multiple Reviews
+
+```bash
+# By date
+--out-dir audits/2025-03-26
+
+# By program name
+--out-dir audits/token-program
+
+# By action type
+--out-dir audits/integration-reviews
+--out-dir audits/production-ship-reviews
+
+# By project
+--out-dir audits/project-deployment-001
+```
+
+### Shared Source Cache
+
+When reviewing the same on-chain program multiple times:
+
+```bash
+# First review - downloads source
+node skills/sealevel-guard-review/scripts/review-program.mjs \
+  --program <ADDRESS> \
+  --out-dir audits/first-review
+
+# Second review - reuses cached source
+node skills/sealevel-guard-review/scripts/review-program.mjs \
+  --program <ADDRESS> \
+  --out-dir audits/second-review  # Uses cached source from artifacts/resolutions/
+```
+
+Source is automatically cached in `artifacts/resolutions/<ADDRESS>/` and reused across reviews.

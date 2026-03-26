@@ -2,6 +2,41 @@
 
 This directory defines the initial `Sealevel Guard` skill suite.
 
+## Installation
+
+To use the `sealevel-guard-review` skill, add it to your Claude Code configuration:
+
+1. Copy the skill directory to your Claude skills folder, or
+2. Reference the skill directly from your local filesystem
+
+The skill will be available as: `/sealevel-guard:sealevel-guard-review`
+
+## Usage
+
+### Review an On-Chain Program
+
+Review a Solana program by its on-chain address:
+
+```
+/sealevel-guard:sealevel-guard-review TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623TQ5rt
+```
+
+### Review a Local Program
+
+Review a local Solana program by its path:
+
+```
+/sealevel-guard:sealevel-guard-review ./my-anchor-program
+/sealevel-guard:sealevel-guard-review <program-address>
+```
+
+### What It Does
+
+The skill performs a parallelized trust-gate review to determine whether a Solana program is safe enough to:
+- **ship** - deploy to production
+- **integrate** - connect with other systems
+- **allocate** - allocate capital through
+
 The design principle is:
 
 - start from proven Solana-native vulnerability categories,
