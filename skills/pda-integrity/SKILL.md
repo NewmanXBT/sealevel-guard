@@ -1,3 +1,9 @@
+---
+name: pda-integrity
+description: Detects whether a program's PDA design allows spoofing, role confusion, or weak authority derivation. Internal specialist module for PDA integrity review.
+user-invocable: false
+---
+
 # PDA Integrity
 
 Program-derived address integrity review skill.

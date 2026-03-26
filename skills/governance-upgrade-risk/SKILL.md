@@ -1,3 +1,9 @@
+---
+name: governance-upgrade-risk
+description: Detects whether governance or upgrade control is concentrated, weakly separated, or capable of undermining user or integrator trust. Internal specialist module for governance risk review.
+user-invocable: false
+---
+
 # Governance Upgrade Risk
 
 Governance and upgradeability trust review skill.

@@ -1,3 +1,9 @@
+---
+name: access-control
+description: Detects whether privileged behavior is exposed to the wrong signer, authority, or account path. Internal specialist module for Solana access-control review.
+user-invocable: false
+---
+
 # Access Control
 
 Solana and Anchor access-control review skill.

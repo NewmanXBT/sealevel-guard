@@ -1,0 +1,8 @@
+{
+    "name": "sealevel-guard",
+    "description": "Agent-native Solana security infrastructure for evaluating protocol and code risk before agents deploy, integrate, trade, or move capital.",
+    "version": "0.1.0",
+    "author": {
+        "name": "Sealevel Guard"
+    }
+}

@@ -50,7 +50,8 @@ function readJson(path) {
 }
 
 function detectFramework(resolution) {
-  if (resolution.resolution_state !== "verified_source_available") {
+  if (resolution.resolution_state !== "verified_source_available" &&
+      resolution.resolution_state !== "local_source_available") {
     return "solana-native-uncertain";
   }
 
@@ -63,7 +64,8 @@ function detectFramework(resolution) {
 }
 
 function deriveComplexityBand(resolution) {
-  if (resolution.resolution_state !== "verified_source_available") {
+  if (resolution.resolution_state !== "verified_source_available" &&
+      resolution.resolution_state !== "local_source_available") {
     return "tier_3";
   }
 
@@ -155,26 +157,28 @@ function main() {
   mkdirSync(reviewDir, { recursive: true });
 
   const sourceOrMetadataBundle =
-    resolution.resolution_state === "verified_source_available"
+    (resolution.resolution_state === "verified_source_available" ||
+     resolution.resolution_state === "local_source_available")
       ? buildSourceBundle(resolution, meta)
       : buildMetadataBundle(resolution, meta);
 
   const sourceBundleName =
-    resolution.resolution_state === "verified_source_available" ? "source.md" : "metadata.md";
+    (resolution.resolution_state === "verified_source_available" ||
+     resolution.resolution_state === "local_source_available") ? "source.md" : "metadata.md";
   const sourceBundlePath = join(reviewDir, sourceBundleName);
   writeFileSync(sourceBundlePath, sourceOrMetadataBundle);
 
-  const sharedRules = readText(new URL("../skills/shared/shared-rules.md", import.meta.url));
-  const judging = readText(new URL("../skills/shared/judging.md", import.meta.url));
-  const formatting = readText(new URL("../skills/shared/report-formatting.md", import.meta.url));
+  const sharedRules = readText(new URL("../../shared/shared-rules.md", import.meta.url));
+  const judging = readText(new URL("../../shared/judging.md", import.meta.url));
+  const formatting = readText(new URL("../../shared/report-formatting.md", import.meta.url));
 
   const specialists = [
-    { name: "access-control", prompt: readText(new URL("../skills/agents/access-control-agent.md", import.meta.url)) },
-    { name: "pda-integrity", prompt: readText(new URL("../skills/agents/pda-integrity-agent.md", import.meta.url)) },
-    { name: "account-constraints", prompt: readText(new URL("../skills/agents/account-constraints-agent.md", import.meta.url)) },
-    { name: "cpi-risk", prompt: readText(new URL("../skills/agents/cpi-risk-agent.md", import.meta.url)) },
-    { name: "token-invariants", prompt: readText(new URL("../skills/agents/token-invariants-agent.md", import.meta.url)) },
-    { name: "governance-upgrade-risk", prompt: readText(new URL("../skills/agents/governance-upgrade-risk-agent.md", import.meta.url)) }
+    { name: "access-control", prompt: readText(new URL("../../access-control/SKILL.md", import.meta.url)) },
+    { name: "pda-integrity", prompt: readText(new URL("../../pda-integrity/SKILL.md", import.meta.url)) },
+    { name: "account-constraints", prompt: readText(new URL("../../account-constraints/SKILL.md", import.meta.url)) },
+    { name: "cpi-risk", prompt: readText(new URL("../../cpi-risk/SKILL.md", import.meta.url)) },
+    { name: "token-invariants", prompt: readText(new URL("../../token-invariants/SKILL.md", import.meta.url)) },
+    { name: "governance-upgrade-risk", prompt: readText(new URL("../../governance-upgrade-risk/SKILL.md", import.meta.url)) }
   ];
 
   const bundles = [];

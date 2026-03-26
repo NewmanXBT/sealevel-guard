@@ -1,3 +1,9 @@
+---
+name: account-constraints
+description: Detects whether the program trusts the wrong accounts, owners, or mutability assumptions. Internal specialist module for Anchor account validation review.
+user-invocable: false
+---
+
 # Account Constraints
 
 Anchor account-validation and account-relationship review skill.
