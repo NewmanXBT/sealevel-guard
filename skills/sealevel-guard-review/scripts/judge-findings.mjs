@@ -28,7 +28,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log("Usage:\n  node scripts/judge-findings.mjs --findings <PATH_TO_SPECIALIST_FINDINGS_JSON>\n");
+  console.log("Usage:\n  node skills/sealevel-guard-review/scripts/judge-findings.mjs --findings <PATH_TO_SPECIALIST_FINDINGS_JSON>\n");
 }
 
 function readJson(path) {

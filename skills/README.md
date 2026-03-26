@@ -12,6 +12,8 @@ The design principle is:
 
 - `sealevel-guard-review/SKILL.md`
   - top-level orchestrator skill
+- `HOW_TO_USE.md`
+  - operator-facing usage flow and runtime entrypoints
 - `shared/`
   - shared rules, judging, and report formatting
 - `agents/`
@@ -55,3 +57,13 @@ The first release intentionally excludes:
 - and fully generalized economic or oracle analysis.
 
 Those can come later if they reinforce the core trust-gate thesis.
+
+## Using The Suite
+
+If you are operating Sealevel Guard as a local runtime package, start with:
+
+- [HOW_TO_USE.md](./HOW_TO_USE.md)
+
+If you are integrating or extending specialist prompts, start with:
+
+- `sealevel-guard-review/SKILL.md`

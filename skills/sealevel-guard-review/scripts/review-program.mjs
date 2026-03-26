@@ -41,7 +41,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/review-program.mjs --program <PROGRAM_ADDRESS> [--requested-action <ship|integrate|allocate>] [--out-dir <DIR>] [--runtime <mock|codex>]
+  node skills/sealevel-guard-review/scripts/review-program.mjs --program <PROGRAM_ADDRESS_OR_LOCAL_PATH> [--requested-action <ship|integrate|allocate>] [--out-dir <DIR>] [--runtime <mock|codex>]
 `);
 }
 

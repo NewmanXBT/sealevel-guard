@@ -154,6 +154,26 @@ Fields:
 
 Anchor-first only.
 
+### First Release Operator Flow
+
+The first release is consumed locally before it becomes a hosted service.
+
+Current usage shape:
+
+1. supply a Solana program address or local Anchor repo
+2. choose a requested action: `ship`, `integrate`, or `allocate`
+3. run the review orchestrator locally
+4. receive a human-readable report plus a machine-readable risk brief
+
+Representative command:
+
+```bash
+npm run review-program -- \
+  --program <PROGRAM_ADDRESS_OR_LOCAL_PATH> \
+  --requested-action integrate \
+  --runtime mock
+```
+
 ### Skill Bundle
 
 #### Access Control

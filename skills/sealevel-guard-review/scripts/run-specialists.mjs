@@ -25,7 +25,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(
-    "Usage:\n  node scripts/run-specialists.mjs --manifest <PATH_TO_BUNDLE_MANIFEST_JSON> [--runtime <mock|codex>]\n"
+    "Usage:\n  node skills/sealevel-guard-review/scripts/run-specialists.mjs --manifest <PATH_TO_BUNDLE_MANIFEST_JSON> [--runtime <mock|codex>]\n"
   );
 }
 

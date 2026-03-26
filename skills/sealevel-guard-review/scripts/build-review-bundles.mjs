@@ -37,7 +37,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/build-review-bundles.mjs --resolution <PATH_TO_RESOLUTION_JSON> [--out-dir <DIR>] [--requested-action <ship|integrate|allocate>]
+  node skills/sealevel-guard-review/scripts/build-review-bundles.mjs --resolution <PATH_TO_RESOLUTION_JSON> [--out-dir <DIR>] [--requested-action <ship|integrate|allocate>]
 `);
 }
 

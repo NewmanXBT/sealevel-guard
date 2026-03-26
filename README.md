@@ -62,6 +62,65 @@ Planned audit skill areas:
 - token and vault invariants,
 - governance and upgradeability risk.
 
+## How To Use
+
+Sealevel Guard currently supports one implemented execution path:
+
+`program address or local Anchor repo -> source bundle -> specialist review -> risk brief`
+
+### Prerequisites
+
+- Node.js 20 or newer
+- network access to a Solana RPC endpoint and verified-build metadata
+- optional: Codex CLI if you want live specialist review instead of the mock runtime
+
+### Quick Start
+
+Install dependencies if needed:
+
+```bash
+npm install
+```
+
+Run a review against a verified program address:
+
+```bash
+npm run review-program -- \
+  --program 5JsSAL3kJDUWD4ZveYXYZmgm1eVqueesTZVdAvtZg8cR \
+  --requested-action integrate \
+  --runtime mock
+```
+
+Run the same pipeline against a local Anchor repo:
+
+```bash
+npm run review-program -- \
+  --program ./path/to/anchor-project \
+  --requested-action ship \
+  --runtime mock
+```
+
+Use the Codex-backed specialist runtime when available:
+
+```bash
+npm run review-program -- \
+  --program ./path/to/anchor-project \
+  --requested-action ship \
+  --runtime codex
+```
+
+### Outputs
+
+By default Sealevel Guard writes review artifacts under:
+
+- `artifacts/reviews/<target>/resolution.json`
+- `artifacts/reviews/<target>/bundle-manifest.json`
+- `artifacts/reviews/<target>/specialist-findings.json`
+- `artifacts/reviews/<target>/judged-risk-brief.json`
+- `artifacts/reviews/<target>/report.md`
+
+See [How To Use](./docs/HOW_TO_USE.md) for the full operator flow and runtime notes.
+
 ## Example Risk Brief
 
 The core artifact is intended to be agent-readable:
@@ -91,6 +150,7 @@ This repository currently contains the product framing for the project:
 - [Narrative](./docs/NARRATIVE.md)
 - [Positioning](./docs/POSITIONING.md)
 - [Product Spec](./docs/PRODUCT_SPEC.md)
+- [How To Use](./docs/HOW_TO_USE.md)
 - [Architecture](./docs/ARCHITECTURE.md)
 - [Roadmap](./docs/ROADMAP.md)
 - [X Article Draft](./docs/X_ARTICLE.md)

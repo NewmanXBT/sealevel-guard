@@ -130,6 +130,30 @@ For human operators:
 3. let local agent runtime execute review skills
 4. receive `report.md` and `risk-report.json`
 
+### Current Operator Entry Point
+
+The current entry point is the `review-program` script:
+
+```bash
+npm run review-program -- \
+  --program <PROGRAM_ADDRESS_OR_LOCAL_PATH> \
+  --requested-action <ship|integrate|allocate> \
+  --runtime <mock|codex>
+```
+
+This script composes the full stage 1 loop:
+
+1. resolve the program address or local source path
+2. fetch or classify the source snapshot
+3. build specialist bundles
+4. run specialist reviews
+5. judge findings
+6. emit a final report and machine-readable risk brief
+
+Default output directory:
+
+- `artifacts/reviews/<target>/`
+
 This means first-release Sealevel Guard is best understood as:
 
 - a security capability package

@@ -21,7 +21,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log("Usage:\n  node scripts/emit-risk-report.mjs --judged <PATH_TO_JUDGED_RISK_BRIEF_JSON>\n");
+  console.log("Usage:\n  node skills/sealevel-guard-review/scripts/emit-risk-report.mjs --judged <PATH_TO_JUDGED_RISK_BRIEF_JSON>\n");
 }
 
 function readJson(path) {

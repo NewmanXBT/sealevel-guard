@@ -44,7 +44,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS> [--out-dir <DIR>] [--rpc-url <URL>] [--verified-status-url <URL>]
+  node skills/sealevel-guard-review/scripts/resolve-program-address.mjs --program <PROGRAM_ADDRESS_OR_LOCAL_PATH> [--out-dir <DIR>] [--rpc-url <URL>] [--verified-status-url <URL>]
 
 Environment:
   SOLANA_RPC_URL             Override the default mainnet RPC endpoint.
