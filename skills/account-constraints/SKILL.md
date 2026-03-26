@@ -6,6 +6,10 @@ user-invocable: false
 
 # Account Constraints
 
+> Forked from Trail of Bits Solana security skills.
+> Original category alignment: missing ownership checks.
+> Modified by Sealevel Guard and distributed as skill text under CC BY-SA 4.0.
+
 Anchor account-validation and account-relationship review skill.
 
 ## Purpose

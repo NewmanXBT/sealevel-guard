@@ -6,6 +6,10 @@ user-invocable: false
 
 # PDA Integrity
 
+> Forked from Trail of Bits Solana security skills.
+> Original category alignment: improper PDA validation.
+> Modified by Sealevel Guard and distributed as skill text under CC BY-SA 4.0.
+
 Program-derived address integrity review skill.
 
 ## Purpose

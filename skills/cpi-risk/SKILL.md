@@ -6,6 +6,11 @@ user-invocable: false
 
 # CPI Risk
 
+> Forked from Trail of Bits Solana security skills.
+> Original category alignment: arbitrary CPI, sysvar account checks, and
+> improper instruction introspection.
+> Modified by Sealevel Guard and distributed as skill text under CC BY-SA 4.0.
+
 Cross-program invocation risk review skill.
 
 ## Purpose

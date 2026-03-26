@@ -2,6 +2,29 @@
 
 This directory defines the initial `Sealevel Guard` skill suite.
 
+## Licensing
+
+This repository uses split licensing:
+
+- code and scripts are licensed under `MIT`
+- designated skill text in this directory is licensed under `CC BY-SA 4.0`
+
+The specialist skill text most directly forked from Trail of Bits Solana
+security skills is:
+
+- `access-control`
+- `pda-integrity`
+- `account-constraints`
+- `cpi-risk`
+
+These files are adapted from the public Trail of Bits Solana vulnerability
+scanner materials and should be treated as `CC BY-SA 4.0`.
+
+Reference:
+
+- `https://skills.sh/trailofbits/skills/solana-vulnerability-scanner`
+- [LICENSE-CC-BY-SA-4.0.md](./LICENSE-CC-BY-SA-4.0.md)
+
 ## Installation
 
 To use the `sealevel-guard-review` skill, add it to your Claude Code configuration:

@@ -1,30 +1,37 @@
 # Attribution Notice
 
-This directory may include skills or skill structure informed by public smart
-contract security materials, including public Solana security categories and
-community skill ecosystems.
+This repository uses split licensing:
 
-For any third-party skill text imported or adapted directly, this repository
-should preserve:
+- code and scripts are licensed under `MIT`
+- designated skill text in `skills/` is licensed under `CC BY-SA 4.0`
 
-- original source,
-- author attribution,
-- license notice,
-- and modification notice.
+The following specialist skill text is forked from or directly aligned with the
+public Trail of Bits Solana security skills:
 
-Current intent:
+- `skills/access-control/SKILL.md`
+- `skills/pda-integrity/SKILL.md`
+- `skills/account-constraints/SKILL.md`
+- `skills/cpi-risk/SKILL.md`
 
-- `Sealevel Guard` owns the review orchestrator, report contract, trust-gate
-  framing, and product structure.
-- Solana-native vulnerability categories may overlap with public materials
-  because they describe real security classes rather than proprietary product
-  ideas.
+These files are adapted by Sealevel Guard and distributed as skill text under
+`CC BY-SA 4.0`.
 
-If Trail of Bits skill text is imported directly in the future, add:
+Upstream reference:
 
-- source path
-- original license
-- modification note
-- share-alike note where required
+- Trail of Bits `solana-vulnerability-scanner`
+- https://skills.sh/trailofbits/skills/solana-vulnerability-scanner
+- [LICENSE-CC-BY-SA-4.0.md](./LICENSE-CC-BY-SA-4.0.md)
 
-before committing or distributing those files.
+Sealevel Guard retains its own authorship for:
+
+- review orchestration
+- report contracts
+- machine-readable risk brief structure
+- local runtime scripts
+- product framing and trust-gate architecture
+
+The following specialist skill text is currently Sealevel Guard-authored rather
+than Trail of Bits-derived:
+
+- `skills/token-invariants/SKILL.md`
+- `skills/governance-upgrade-risk/SKILL.md`

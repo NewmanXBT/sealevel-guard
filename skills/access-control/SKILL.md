@@ -6,6 +6,10 @@ user-invocable: false
 
 # Access Control
 
+> Forked from Trail of Bits Solana security skills.
+> Original category alignment: missing signer checks.
+> Modified by Sealevel Guard and distributed as skill text under CC BY-SA 4.0.
+
 Solana and Anchor access-control review skill.
 
 ## Purpose
