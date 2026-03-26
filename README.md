@@ -76,37 +76,16 @@ Sealevel Guard currently supports one implemented execution path:
 
 ### Quick Start
 
-Install dependencies if needed:
+Install:
 
 ```bash
-npm install
+npx skills add NewmanXBT/sealevel-guard
 ```
 
-Run a review against a verified program address:
+Run review:
 
 ```bash
-npm run review-program -- \
-  --program 5JsSAL3kJDUWD4ZveYXYZmgm1eVqueesTZVdAvtZg8cR \
-  --requested-action integrate \
-  --runtime mock
-```
-
-Run the same pipeline against a local Anchor repo:
-
-```bash
-npm run review-program -- \
-  --program ./path/to/anchor-project \
-  --requested-action ship \
-  --runtime mock
-```
-
-Use the Codex-backed specialist runtime when available:
-
-```bash
-npm run review-program -- \
-  --program ./path/to/anchor-project \
-  --requested-action ship \
-  --runtime codex
+/sealevel-guard:sealevel-guard-review <program_address_or_local_path>
 ```
 
 ### Outputs
