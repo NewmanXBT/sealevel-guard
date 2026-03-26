@@ -13,12 +13,12 @@ This keeps engineering and commercialization in the right order.
 
 ### Objective
 
-Make the core security pipeline real before adding pricing, quoting, or x402.
+Make the core local skill workflow real before adding pricing, quoting, or x402.
 
 ### Success Condition
 
 A human operator can run a single command against a real Solana program address
-and receive a real risk report.
+from a local host runtime and receive a real risk report.
 
 Target flow:
 
@@ -48,6 +48,7 @@ Target flow:
 - x402
 - pricing engine
 - quoted audit jobs
+- Quick Scan service layer
 - interface-level IDL review
 - broad native Rust coverage
 

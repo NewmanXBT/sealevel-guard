@@ -10,8 +10,10 @@ Sealevel Guard is being built in two stages:
 The first stage is the current engineering focus.
 
 It is not a hosted audit platform yet.
-It is a review pipeline that can be consumed by local agent runtimes such as
-Claude Code, Codex, or similar skill-capable hosts.
+It is a local agent-facing review capability that is primarily meant to be run
+through a host runtime such as `Claude Code`. `Codex` support exists as an
+optional runtime path, but the current product shape is still local and
+skill-native.
 
 ## Stage 1: Skill-Native Architecture
 
@@ -126,7 +128,7 @@ Responsibilities:
 For human operators:
 
 1. provide a Solana `program_address`
-2. run Sealevel Guard locally
+2. run Sealevel Guard locally from a host runtime such as `Claude Code`
 3. let local agent runtime execute review skills
 4. receive `report.md` and `risk-report.json`
 
@@ -156,8 +158,9 @@ Default output directory:
 
 This means first-release Sealevel Guard is best understood as:
 
-- a security capability package
-- plus a resolver and review protocol
+- a local trust gate for Solana agents
+- backed by a resolver and review protocol
+- typically launched from a local host runtime, not from an API service
 
 It is not yet a fully hosted service.
 

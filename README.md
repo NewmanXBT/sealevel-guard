@@ -9,9 +9,9 @@ a structured risk brief that upstream agents can use to allow, warn, deny, or
 escalate an action.
 
 > [!NOTE]
-> Current status: early planning repo with an address-resolution prototype.
-> The first implemented path is `program address -> verified build -> source
-> snapshot`. Interface-level review remains future work.
+> Current status: stage 1, local skill-native workflow.
+> The implemented path is `program address or local path -> source resolution ->
+> specialist review -> risk brief`.
 
 ## Why It Exists
 
@@ -31,23 +31,35 @@ Sealevel Guard is being designed to fill that gap for:
 The goal is to turn Solana security review into a machine-readable decision
 primitive.
 
-## What The Product Looks Like
+## What The Product Is Today
 
-Sealevel Guard is being shaped around three product layers:
+Sealevel Guard currently exists as a local trust gate for Solana agents.
+The intended operator flow is:
+
+1. install or load the skill into a host runtime such as `Claude Code`
+2. point an agent at a Solana `program address` or local Anchor path
+3. let the local runtime execute the review
+4. receive a structured risk brief and report
+
+Today, the product is best understood as:
+
+- an Anchor-first security judgment layer for Solana agents,
+- a local review capability that can be invoked from agent runtimes,
+- and a machine-readable risk brief generator for agent decisions.
+
+## What The Product May Become Later
+
+If the local agent workflow proves out, Sealevel Guard can later expand into a
+hosted, agent-facing service layer built around:
 
 1. `Quick Scan`
    - lightweight intake and coarse triage
-   - returns support status, rough complexity, and whether deeper review is
-     recommended
 2. `Quoted Audit`
-   - the primary commercial unit
-   - priced by codebase complexity, selected audit scope, and review depth
+   - quoted review jobs priced by codebase complexity and scope
 3. `Risk Brief`
-   - structured output for downstream agents
-   - designed to support allow, warn, deny, or escalate decisions
+   - structured output for downstream agents and automated decisions
 
-`x402` is the settlement rail, not the pricing model. The economic unit is the
-audit job, not the raw API request.
+That is future product surface built on top of the current agent workflow.
 
 ## What The First Release Focuses On
 
@@ -72,7 +84,8 @@ Sealevel Guard currently supports one implemented execution path:
 
 - Node.js 20 or newer
 - network access to a Solana RPC endpoint and verified-build metadata
-- optional: Codex CLI if you want live specialist review instead of the mock runtime
+- Claude Code if you want to run the product as intended from a local host runtime
+- optional: Codex CLI if you want to experiment with a Codex-backed specialist runtime
 
 ### Quick Start
 
@@ -124,7 +137,8 @@ The core artifact is intended to be agent-readable:
 
 ## What Exists In This Repo Today
 
-This repository currently contains the product framing for the project:
+This repository currently contains the stage 1 product framing and current
+agent-facing implementation for the project:
 
 - [Narrative](./docs/NARRATIVE.md)
 - [Positioning](./docs/POSITIONING.md)
@@ -139,6 +153,6 @@ This repository currently contains the product framing for the project:
 Sealevel Guard is not a generic crypto chatbot, a chain-agnostic Rust scanner,
 or a thin pay-per-request x402 demo.
 
-It is being positioned as security clearing infrastructure for the Solana agent
-economy: a system other agents can call before they deploy code, integrate
-programs, or route funds.
+Right now it is a local trust gate for Solana agents and operators. Over time,
+it can become security clearing infrastructure for the Solana agent economy: a
+system agents call before they deploy code, integrate programs, or route funds.

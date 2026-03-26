@@ -9,7 +9,8 @@ The current supported flow is:
 
 `program address or local path -> source resolution -> specialist review -> risk brief`
 
-This is a stage 1, skill-native workflow. You bring the runtime and execute the
+This is a stage 1, local agent workflow. In the intended setup, you invoke
+Sealevel Guard from a host runtime such as `Claude Code` and execute the
 review locally.
 
 ## Prerequisites
@@ -18,7 +19,8 @@ review locally.
 - network access to:
   - a Solana RPC endpoint
   - the verified-build status endpoint
-- optional: Codex CLI with valid auth if you want live specialist execution
+- Claude Code for the primary local skill workflow
+- optional: Codex CLI with valid auth if you want to experiment with a Codex-backed specialist runtime
 
 Relevant environment variables:
 
@@ -110,7 +112,7 @@ Use `mock` when:
 
 Use `codex` when:
 
-- you want real specialist reasoning
+- you want to experiment with a Codex-backed specialist runtime
 - you have the Codex CLI installed and authenticated
 
 ## Current Limits
@@ -119,3 +121,4 @@ Use `codex` when:
 - verified-source resolution is the strongest supported path
 - interface-level IDL review remains future work
 - stage 2 hosted service flow does not exist yet
+- Quick Scan, quoted audit jobs, and x402 settlement are future work
