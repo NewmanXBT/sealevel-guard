@@ -1,3 +1,9 @@
+---
+name: token-invariants
+description: Detects whether token and vault logic can violate economic or accounting assumptions another agent would rely on. Internal specialist module for token invariant review.
+user-invocable: false
+---
+
 # Token Invariants
 
 Token flow and vault invariant review skill.

@@ -1,3 +1,9 @@
+---
+name: cpi-risk
+description: Detects whether the program can invoke the wrong program, propagate too much privilege, or trust unsafe callback behavior. Internal specialist module for CPI risk review.
+user-invocable: false
+---
+
 # CPI Risk
 
 Cross-program invocation risk review skill.

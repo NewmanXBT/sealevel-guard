@@ -1,3 +1,10 @@
+---
+name: sealevel-guard-review
+description: Orchestrates parallelized Solana trust-gate review to determine whether a codebase or program is safe enough to ship, integrate, or allocate capital through. Use when asked to review, audit, or assess risk of a Solana program.
+argument-hint: [program_address]
+disable-model-invocation: true
+---
+
 # Sealevel Guard Review
 
 You are the orchestrator of a parallelized Solana trust-gate review.
